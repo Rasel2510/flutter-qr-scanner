@@ -12,8 +12,8 @@ class AppBottomNavBar extends StatelessWidget {
   });
 
   static const _items = [
-    (Icons.qr_code_2_rounded, Icons.qr_code_2_rounded, 'Generate'),
     (Icons.qr_code_scanner_rounded, Icons.qr_code_scanner_rounded, 'Scan'),
+    (Icons.qr_code_2_rounded, Icons.qr_code_2_rounded, 'Generate'),
     (Icons.history_rounded, Icons.history_rounded, 'History'),
   ];
 
@@ -43,14 +43,19 @@ class AppBottomNavBar extends StatelessWidget {
                   children: [
                     AnimatedContainer(
                       duration: const Duration(milliseconds: 200),
-                      width: 44, height: 32,
+                      width: 44,
+                      height: 32,
                       decoration: BoxDecoration(
-                        color: isSelected ? AppColors.primary.withValues(alpha: 0.15) : Colors.transparent,
+                        color: isSelected
+                            ? AppColors.primary.withValues(alpha: 0.15)
+                            : Colors.transparent,
                         borderRadius: BorderRadius.circular(100),
                       ),
                       child: Icon(
                         isSelected ? activeIcon : icon,
-                        color: isSelected ? AppColors.primary : AppColors.textMuted,
+                        color: isSelected
+                            ? AppColors.primary
+                            : AppColors.textMuted,
                         size: 22,
                       ),
                     ),
@@ -59,8 +64,11 @@ class AppBottomNavBar extends StatelessWidget {
                       label,
                       style: TextStyle(
                         fontSize: 11,
-                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                        color: isSelected ? AppColors.primary : AppColors.textMuted,
+                        fontWeight:
+                            isSelected ? FontWeight.w600 : FontWeight.w400,
+                        color: isSelected
+                            ? AppColors.primary
+                            : AppColors.textMuted,
                       ),
                     ),
                   ],

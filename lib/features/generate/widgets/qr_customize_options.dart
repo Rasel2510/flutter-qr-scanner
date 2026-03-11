@@ -227,7 +227,7 @@ class _QRCustomizeOptionsState extends State<QRCustomizeOptions> {
                 ),
                 const SizedBox(width: 10),
                 Text(
-                  '#${current.value.toRadixString(16).substring(2).toUpperCase()}',
+                  '#${current.toARGB32().toRadixString(16).substring(2).toUpperCase()}',
                   style: const TextStyle(
                       fontSize: 12,
                       fontFamily: 'monospace',
