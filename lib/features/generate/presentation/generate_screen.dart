@@ -57,9 +57,9 @@ class _GenerateScreenState extends State<GenerateScreen> {
       label: QRHistoryItem.typeLabel(_selectedType),
       content: _inputValue,
       fgColor:
-          '#${_fgColor.value.toRadixString(16).substring(2).toUpperCase()}',
+          '#${_fgColor.toARGB32().toRadixString(16).substring(2).toUpperCase()}',
       bgColor:
-          '#${_bgColor.value.toRadixString(16).substring(2).toUpperCase()}',
+          '#${_bgColor.toARGB32().toRadixString(16).substring(2).toUpperCase()}',
     );
   }
 
