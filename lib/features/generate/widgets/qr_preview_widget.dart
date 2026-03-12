@@ -1,11 +1,13 @@
-import 'dart:typed_data';
 import 'dart:ui' as ui;
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
-import 'dart:io';
+
 import '../../../core/theme/app_theme.dart';
 
 class QRPreviewWidget extends StatefulWidget {
@@ -44,75 +46,115 @@ class _QRPreviewWidgetState extends State<QRPreviewWidget> {
     }
   }
 
+  /// Capture QR as PNG
   Future<Uint8List?> _captureQR() async {
     try {
       final boundary =
           _qrKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
+
       if (boundary == null) return null;
-      final image = await boundary.toImage(pixelRatio: 3.0);
-      final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+
+      final image = await boundary.toImage(
+        pixelRatio: MediaQuery.of(context).devicePixelRatio * 2,
+      );
+
+      final byteData = await image.toByteData(
+        format: ui.ImageByteFormat.png,
+      );
+
       return byteData?.buffer.asUint8List();
     } catch (e) {
+      debugPrint("QR Capture Error: $e");
       return null;
     }
   }
 
+  /// Save QR to device
   Future<void> _downloadQR() async {
     final bytes = await _captureQR();
     if (bytes == null) return;
+
     try {
       final dir = await getApplicationDocumentsDirectory();
+
       final file = File(
-          '${dir.path}/qrcraft_${DateTime.now().millisecondsSinceEpoch}.png');
+        '${dir.path}/qrcraft_${DateTime.now().millisecondsSinceEpoch}.png',
+      );
+
       await file.writeAsBytes(bytes);
+
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(_snackBar('QR code saved!', AppColors.success));
+        ScaffoldMessenger.of(context).showSnackBar(
+          _snackBar('QR code saved!', AppColors.success),
+        );
       }
     } catch (e) {
+      debugPrint("Save Error: $e");
+
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(_snackBar('Could not save QR code', AppColors.error));
+        ScaffoldMessenger.of(context).showSnackBar(
+          _snackBar('Could not save QR code', AppColors.error),
+        );
       }
     }
   }
 
+  /// Share QR
   Future<void> _shareQR() async {
     final bytes = await _captureQR();
     if (bytes == null) return;
+
     try {
       final dir = await getTemporaryDirectory();
       final file = File('${dir.path}/qrcraft_share.png');
+
       await file.writeAsBytes(bytes);
+
       await Share.shareXFiles(
         [XFile(file.path)],
         text: 'QR Code generated with QRcraft',
       );
-    } catch (_) {}
-  }
-
-  Future<void> _copyQR() async {
-    // Copy content text to clipboard as fallback
-    await Future.delayed(Duration.zero);
-    if (mounted) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(_snackBar('Copied to clipboard!', AppColors.primary));
+    } catch (e) {
+      debugPrint("Share Error: $e");
     }
   }
 
-  SnackBar _snackBar(String msg, Color color) => SnackBar(
-        content: Row(children: [
+  /// Copy content to clipboard
+  Future<void> _copyQR() async {
+    await Clipboard.setData(
+      ClipboardData(text: widget.content),
+    );
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        _snackBar('Copied to clipboard!', AppColors.primary),
+      );
+    }
+  }
+
+  SnackBar _snackBar(String msg, Color color) {
+    return SnackBar(
+      content: Row(
+        children: [
           Icon(Icons.check_circle_rounded, color: color, size: 18),
           const SizedBox(width: 10),
-          Text(msg,
-              style: const TextStyle(
-                  color: Colors.white, fontWeight: FontWeight.w500)),
-        ]),
-        backgroundColor: AppColors.bgCard,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        margin: const EdgeInsets.all(16),
-      );
+          Text(
+            msg,
+            style: const TextStyle(
+              color: Colors.black,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+      backgroundColor: AppColors.bgCard,
+      behavior: SnackBarBehavior.floating,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      margin: const EdgeInsets.all(16),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -137,20 +179,25 @@ class _QRPreviewWidgetState extends State<QRPreviewWidget> {
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.06),
-                          blurRadius: 20,
-                          offset: const Offset(0, 6)),
+                        color: Colors.black.withValues(alpha: 0.06),
+                        blurRadius: 20,
+                        offset: const Offset(0, 6),
+                      ),
                     ],
                   ),
                   child: QrImageView(
-                    data: widget.content,
+                    data: widget.content.isEmpty ? " " : widget.content,
                     version: QrVersions.auto,
-                    size: widget.size.clamp(160, 220),
+                    size: widget.size,
+                    padding: EdgeInsets.zero,
                     eyeStyle: QrEyeStyle(
-                        eyeShape: QrEyeShape.square, color: widget.fgColor),
+                      eyeShape: QrEyeShape.square,
+                      color: widget.fgColor,
+                    ),
                     dataModuleStyle: QrDataModuleStyle(
-                        dataModuleShape: QrDataModuleShape.square,
-                        color: widget.fgColor),
+                      dataModuleShape: QrDataModuleShape.square,
+                      color: widget.fgColor,
+                    ),
                     errorCorrectionLevel: _ecLevel,
                   ),
                 ),
@@ -165,7 +212,10 @@ class _QRPreviewWidgetState extends State<QRPreviewWidget> {
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 14,
+                vertical: 10,
+              ),
               decoration: BoxDecoration(
                 color: AppColors.surface,
                 borderRadius: BorderRadius.circular(10),
@@ -175,9 +225,10 @@ class _QRPreviewWidgetState extends State<QRPreviewWidget> {
                     ? '${widget.content.substring(0, 60)}...'
                     : widget.content,
                 style: const TextStyle(
-                    fontSize: 12,
-                    fontFamily: 'monospace',
-                    color: AppColors.textSecondary),
+                  fontSize: 12,
+                  fontFamily: 'monospace',
+                  color: AppColors.textSecondary,
+                ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -192,15 +243,22 @@ class _QRPreviewWidgetState extends State<QRPreviewWidget> {
             child: Row(
               children: [
                 _ActionBtn(
-                    icon: Icons.download_rounded,
-                    label: 'Save',
-                    onTap: _downloadQR),
+                  icon: Icons.download_rounded,
+                  label: 'Save',
+                  onTap: _downloadQR,
+                ),
                 const SizedBox(width: 10),
                 _ActionBtn(
-                    icon: Icons.copy_rounded, label: 'Copy', onTap: _copyQR),
+                  icon: Icons.copy_rounded,
+                  label: 'Copy',
+                  onTap: _copyQR,
+                ),
                 const SizedBox(width: 10),
                 _ActionBtn(
-                    icon: Icons.share_rounded, label: 'Share', onTap: _shareQR),
+                  icon: Icons.share_rounded,
+                  label: 'Share',
+                  onTap: _shareQR,
+                ),
               ],
             ),
           ),
@@ -215,8 +273,11 @@ class _ActionBtn extends StatelessWidget {
   final String label;
   final VoidCallback onTap;
 
-  const _ActionBtn(
-      {required this.icon, required this.label, required this.onTap});
+  const _ActionBtn({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -231,13 +292,20 @@ class _ActionBtn extends StatelessWidget {
           ),
           child: Column(
             children: [
-              Icon(icon, size: 20, color: AppColors.text),
+              Icon(
+                icon,
+                size: 20,
+                color: AppColors.text,
+              ),
               const SizedBox(height: 4),
-              Text(label,
-                  style: const TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.textSecondary)),
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.textSecondary,
+                ),
+              ),
             ],
           ),
         ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/qr_history_item.dart';
+
 class ScanResultWidget extends StatelessWidget {
   final String result;
   final VoidCallback onDismiss;
@@ -39,7 +40,7 @@ class ScanResultWidget extends StatelessWidget {
         content: const Row(children: [
           Icon(Icons.copy_rounded, color: AppColors.success, size: 16),
           SizedBox(width: 8),
-          Text('Copied to clipboard', style: TextStyle(color: Colors.white)),
+          Text('Copied to clipboard', style: TextStyle(color: Colors.black)),
         ]),
         backgroundColor: AppColors.bgCard,
         behavior: SnackBarBehavior.floating,

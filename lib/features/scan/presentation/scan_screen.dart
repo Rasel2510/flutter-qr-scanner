@@ -84,7 +84,7 @@ class _ScanScreenState extends State<ScanScreen> with WidgetsBindingObserver {
                   color: AppColors.error, size: 18),
               SizedBox(width: 10),
               Text('No QR code found in image',
-                  style: TextStyle(color: Colors.white)),
+                  style: TextStyle(color: Colors.black)),
             ]),
             backgroundColor: AppColors.bgCard,
             behavior: SnackBarBehavior.floating,
