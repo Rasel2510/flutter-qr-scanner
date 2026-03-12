@@ -14,7 +14,7 @@ class ScanScreen extends StatefulWidget {
 }
 
 class _ScanScreenState extends State<ScanScreen> with WidgetsBindingObserver {
-  final MobileScannerController _controller = MobileScannerController();
+  late MobileScannerController _controller;
   bool _scanMode = true; // true = camera, false = upload
   String? _scanResult;
   bool _torchOn = false;
@@ -24,6 +24,14 @@ class _ScanScreenState extends State<ScanScreen> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _initController();
+  }
+
+  void _initController() {
+    _controller = MobileScannerController(
+      detectionSpeed: DetectionSpeed.noDuplicates,
+      returnImage: false,
+    );
   }
 
   @override
@@ -35,15 +43,28 @@ class _ScanScreenState extends State<ScanScreen> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) _controller.start();
-    if (state == AppLifecycleState.paused) _controller.stop();
+    switch (state) {
+      case AppLifecycleState.resumed:
+        if (_isScanning && _scanMode) _controller.start();
+        break;
+      case AppLifecycleState.paused:
+      case AppLifecycleState.inactive:
+        _controller.stop();
+        break;
+      default:
+        break;
+    }
   }
 
   void _onDetect(BarcodeCapture capture) {
     if (!_isScanning) return;
-    final barcode = capture.barcodes.first;
-    final value = barcode.rawValue;
-    if (value == null) return;
+    if (capture.barcodes.isEmpty) return;
+    final value = capture.barcodes.first.rawValue;
+    if (value == null || value.isEmpty) return;
+
+    // Stop camera immediately so it doesn't keep firing
+    _controller.stop();
+
     setState(() {
       _scanResult = value;
       _isScanning = false;
@@ -61,14 +82,25 @@ class _ScanScreenState extends State<ScanScreen> with WidgetsBindingObserver {
     );
   }
 
+  /// Dismiss result → restart camera for next scan
+  void _resetScan() {
+    setState(() {
+      _scanResult = null;
+      _isScanning = true;
+      _torchOn = false;
+    });
+    _controller.start();
+  }
+
   Future<void> _pickFromGallery() async {
     final picker = ImagePicker();
     final image = await picker.pickImage(source: ImageSource.gallery);
     if (image == null) return;
+
     final result = await _controller.analyzeImage(image.path);
     if (result != null && result.barcodes.isNotEmpty) {
       final value = result.barcodes.first.rawValue;
-      if (value != null) {
+      if (value != null && value.isNotEmpty) {
         setState(() {
           _scanResult = value;
           _isScanning = false;
@@ -97,11 +129,21 @@ class _ScanScreenState extends State<ScanScreen> with WidgetsBindingObserver {
     }
   }
 
-  void _resetScan() {
+  void _switchMode(bool toCamera) {
+    if (_scanMode == toCamera) return;
     setState(() {
+      _scanMode = toCamera;
       _scanResult = null;
       _isScanning = true;
+      _torchOn = false;
     });
+    if (toCamera) {
+      Future.delayed(const Duration(milliseconds: 100), () {
+        if (mounted) _controller.start();
+      });
+    } else {
+      _controller.stop();
+    }
   }
 
   @override
@@ -115,8 +157,6 @@ class _ScanScreenState extends State<ScanScreen> with WidgetsBindingObserver {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 32),
-
-              /// HEADER
               const Text('Scan QR',
                   style: TextStyle(
                       fontSize: 28,
@@ -127,19 +167,10 @@ class _ScanScreenState extends State<ScanScreen> with WidgetsBindingObserver {
               const Text('Use camera or pick from gallery',
                   style:
                       TextStyle(fontSize: 14, color: AppColors.textSecondary)),
-
               const SizedBox(height: 24),
-
-              /// MODE TOGGLE
-              _ModeToggle(
-                isCameraMode: _scanMode,
-                onToggle: (v) => setState(() => _scanMode = v),
-              ),
-
+              _ModeToggle(isCameraMode: _scanMode, onToggle: _switchMode),
               const SizedBox(height: 20),
-
-              /// CAMERA VIEW
-              if (_scanMode) ...[
+              if (_scanMode)
                 _CameraSection(
                   controller: _controller,
                   torchOn: _torchOn,
@@ -149,21 +180,13 @@ class _ScanScreenState extends State<ScanScreen> with WidgetsBindingObserver {
                     _controller.toggleTorch();
                   },
                   onPickGallery: _pickFromGallery,
-                ),
-              ] else ...[
+                )
+              else
                 _UploadSection(onPick: _pickFromGallery),
-              ],
-
               const SizedBox(height: 20),
-
-              /// RESULT
               if (_scanResult != null)
-                ScanResultWidget(
-                  result: _scanResult!,
-                  onDismiss: _resetScan,
-                ),
-
-              const SizedBox(height: 20),
+                ScanResultWidget(result: _scanResult!, onDismiss: _resetScan),
+              const SizedBox(height: 32),
             ],
           ),
         ),
@@ -172,35 +195,30 @@ class _ScanScreenState extends State<ScanScreen> with WidgetsBindingObserver {
   }
 }
 
-/// ─── MODE TOGGLE ─────────────────────────────────────────
+// ─── MODE TOGGLE ─────────────────────────────────────────
 class _ModeToggle extends StatelessWidget {
   final bool isCameraMode;
   final ValueChanged<bool> onToggle;
-
   const _ModeToggle({required this.isCameraMode, required this.onToggle});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12),
-      ),
+          color: AppColors.surface, borderRadius: BorderRadius.circular(12)),
       padding: const EdgeInsets.all(4),
-      child: Row(
-        children: [
-          _TabBtn(
-              icon: Icons.camera_alt_rounded,
-              label: 'Camera',
-              isActive: isCameraMode,
-              onTap: () => onToggle(true)),
-          _TabBtn(
-              icon: Icons.photo_library_rounded,
-              label: 'Upload',
-              isActive: !isCameraMode,
-              onTap: () => onToggle(false)),
-        ],
-      ),
+      child: Row(children: [
+        _TabBtn(
+            icon: Icons.camera_alt_rounded,
+            label: 'Camera',
+            isActive: isCameraMode,
+            onTap: () => onToggle(true)),
+        _TabBtn(
+            icon: Icons.photo_library_rounded,
+            label: 'Upload',
+            isActive: !isCameraMode,
+            onTap: () => onToggle(false)),
+      ]),
     );
   }
 }
@@ -210,7 +228,6 @@ class _TabBtn extends StatelessWidget {
   final String label;
   final bool isActive;
   final VoidCallback onTap;
-
   const _TabBtn(
       {required this.icon,
       required this.label,
@@ -237,184 +254,165 @@ class _TabBtn extends StatelessWidget {
                   ]
                 : null,
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon,
-                  size: 16,
-                  color: isActive ? AppColors.text : AppColors.textMuted),
-              const SizedBox(width: 7),
-              Text(label,
-                  style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
-                      color: isActive ? AppColors.text : AppColors.textMuted)),
-            ],
-          ),
+          child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+            Icon(icon,
+                size: 16,
+                color: isActive ? AppColors.text : AppColors.textMuted),
+            const SizedBox(width: 7),
+            Text(label,
+                style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+                    color: isActive ? AppColors.text : AppColors.textMuted)),
+          ]),
         ),
       ),
     );
   }
 }
 
-/// ─── CAMERA SECTION ──────────────────────────────────────
+// ─── CAMERA SECTION ──────────────────────────────────────
 class _CameraSection extends StatelessWidget {
   final MobileScannerController controller;
   final bool torchOn;
   final void Function(BarcodeCapture) onDetect;
   final VoidCallback onToggleTorch;
   final VoidCallback onPickGallery;
-
-  const _CameraSection({
-    required this.controller,
-    required this.torchOn,
-    required this.onDetect,
-    required this.onToggleTorch,
-    required this.onPickGallery,
-  });
+  const _CameraSection(
+      {required this.controller,
+      required this.torchOn,
+      required this.onDetect,
+      required this.onToggleTorch,
+      required this.onPickGallery});
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        /// CAMERA
-        ClipRRect(
-          borderRadius: BorderRadius.circular(20),
-          child: SizedBox(
-            height: 320,
-            child: Stack(
-              children: [
-                MobileScanner(controller: controller, onDetect: onDetect),
-
-                /// SCAN FRAME OVERLAY
-                Positioned.fill(child: _ScanOverlay()),
-
-                /// TORCH BUTTON
-                Positioned(
-                  top: 16,
-                  right: 16,
-                  child: GestureDetector(
-                    onTap: onToggleTorch,
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: torchOn ? AppColors.warning : Colors.black45,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                          torchOn
-                              ? Icons.flash_on_rounded
-                              : Icons.flash_off_rounded,
-                          color: Colors.white,
-                          size: 20),
-                    ),
-                  ),
+    return Column(children: [
+      ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: SizedBox(
+          height: 320,
+          child: Stack(fit: StackFit.expand, children: [
+            MobileScanner(controller: controller, onDetect: onDetect),
+            const _ScanOverlay(),
+            Positioned(
+              top: 16,
+              right: 16,
+              child: GestureDetector(
+                onTap: onToggleTorch,
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                      color: torchOn ? AppColors.warning : Colors.black38,
+                      shape: BoxShape.circle),
+                  child: Icon(
+                      torchOn
+                          ? Icons.flash_on_rounded
+                          : Icons.flash_off_rounded,
+                      color: Colors.white,
+                      size: 20),
                 ),
-              ],
+              ),
             ),
-          ),
+          ]),
         ),
-
-        const SizedBox(height: 16),
-
-        /// GALLERY BUTTON
-        GestureDetector(
-          onTap: onPickGallery,
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 14),
-            decoration: BoxDecoration(
+      ),
+      const SizedBox(height: 14),
+      GestureDetector(
+        onTap: onPickGallery,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          decoration: BoxDecoration(
               color: AppColors.surface,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.border),
-            ),
-            child: const Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.photo_library_outlined,
-                    color: AppColors.primary, size: 18),
-                SizedBox(width: 8),
-                Text('Pick from Gallery',
-                    style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.primary)),
-              ],
-            ),
-          ),
+              border: Border.all(color: AppColors.border)),
+          child:
+              const Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+            Icon(Icons.photo_library_outlined, color: AppColors.text, size: 18),
+            SizedBox(width: 8),
+            Text('Pick from Gallery',
+                style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.text)),
+          ]),
         ),
-      ],
-    );
+      ),
+    ]);
   }
 }
 
-/// ─── SCAN OVERLAY ────────────────────────────────────────
+// ─── SCAN OVERLAY ────────────────────────────────────────
 class _ScanOverlay extends StatelessWidget {
+  const _ScanOverlay();
   @override
-  Widget build(BuildContext context) {
-    return CustomPaint(
-      painter: _ScanFramePainter(),
-    );
-  }
+  Widget build(BuildContext context) =>
+      CustomPaint(painter: _ScanFramePainter());
 }
 
 class _ScanFramePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = Colors.white
-      ..strokeWidth = 3
-      ..style = PaintingStyle.stroke;
-
+    const frameSize = 200.0;
     final cx = size.width / 2;
     final cy = size.height / 2;
-    const frameSize = 180.0;
-    const cornerLen = 30.0;
-    const cornerRadius = 6.0;
-
     final left = cx - frameSize / 2;
     final top = cy - frameSize / 2;
     final right = cx + frameSize / 2;
     final bottom = cy + frameSize / 2;
 
-    // Top-left corner
-    canvas.drawPath(
-        Path()
-          ..moveTo(left, top + cornerLen)
-          ..lineTo(left, top + cornerRadius)
-          ..arcToPoint(Offset(left + cornerRadius, top),
-              radius: const Radius.circular(cornerRadius))
-          ..lineTo(left + cornerLen, top),
-        paint);
+    // Dim overlay outside frame
+    final dimPaint = Paint()..color = Colors.black.withValues(alpha: 0.38);
+    canvas.drawRect(Rect.fromLTRB(0, 0, size.width, top), dimPaint);
+    canvas.drawRect(
+        Rect.fromLTRB(0, bottom, size.width, size.height), dimPaint);
+    canvas.drawRect(Rect.fromLTRB(0, top, left, bottom), dimPaint);
+    canvas.drawRect(Rect.fromLTRB(right, top, size.width, bottom), dimPaint);
 
-    // Top-right corner
-    canvas.drawPath(
-        Path()
-          ..moveTo(right - cornerLen, top)
-          ..lineTo(right - cornerRadius, top)
-          ..arcToPoint(Offset(right, top + cornerRadius),
-              radius: const Radius.circular(cornerRadius))
-          ..lineTo(right, top + cornerLen),
-        paint);
+    // Corner brackets
+    final paint = Paint()
+      ..color = Colors.white
+      ..strokeWidth = 3
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
 
-    // Bottom-left corner
-    canvas.drawPath(
-        Path()
-          ..moveTo(left, bottom - cornerLen)
-          ..lineTo(left, bottom - cornerRadius)
-          ..arcToPoint(Offset(left + cornerRadius, bottom),
-              radius: const Radius.circular(cornerRadius))
-          ..lineTo(left + cornerLen, bottom),
-        paint);
+    const cl = 28.0; // corner length
+    const r = 6.0; // corner radius
 
-    // Bottom-right corner
+    // Top-left
     canvas.drawPath(
         Path()
-          ..moveTo(right, bottom - cornerLen)
-          ..lineTo(right, bottom - cornerRadius)
-          ..arcToPoint(Offset(right - cornerRadius, bottom),
-              radius: const Radius.circular(cornerRadius), clockwise: false)
-          ..lineTo(right - cornerLen, bottom),
+          ..moveTo(left, top + cl)
+          ..lineTo(left, top + r)
+          ..arcToPoint(Offset(left + r, top), radius: const Radius.circular(r))
+          ..lineTo(left + cl, top),
+        paint);
+    // Top-right
+    canvas.drawPath(
+        Path()
+          ..moveTo(right - cl, top)
+          ..lineTo(right - r, top)
+          ..arcToPoint(Offset(right, top + r), radius: const Radius.circular(r))
+          ..lineTo(right, top + cl),
+        paint);
+    // Bottom-left
+    canvas.drawPath(
+        Path()
+          ..moveTo(left, bottom - cl)
+          ..lineTo(left, bottom - r)
+          ..arcToPoint(Offset(left + r, bottom),
+              radius: const Radius.circular(r))
+          ..lineTo(left + cl, bottom),
+        paint);
+    // Bottom-right
+    canvas.drawPath(
+        Path()
+          ..moveTo(right, bottom - cl)
+          ..lineTo(right, bottom - r)
+          ..arcToPoint(Offset(right - r, bottom),
+              radius: const Radius.circular(r), clockwise: false)
+          ..lineTo(right - cl, bottom),
         paint);
   }
 
@@ -422,10 +420,9 @@ class _ScanFramePainter extends CustomPainter {
   bool shouldRepaint(_) => false;
 }
 
-/// ─── UPLOAD SECTION ──────────────────────────────────────
+// ─── UPLOAD SECTION ──────────────────────────────────────
 class _UploadSection extends StatelessWidget {
   final VoidCallback onPick;
-
   const _UploadSection({required this.onPick});
 
   @override
@@ -435,34 +432,24 @@ class _UploadSection extends StatelessWidget {
       child: Container(
         height: 200,
         decoration: BoxDecoration(
-          color: AppColors.bgCard,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.border),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: double.infinity,
-              height: 52,
-              decoration: const BoxDecoration(
-                color: AppColors.surface,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.upload_rounded,
-                  color: AppColors.text, size: 24),
-            ),
-            const SizedBox(height: 14),
-            const Text('Tap to browse',
-                style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.text)),
-            const SizedBox(height: 4),
-            const Text('PNG · JPG · WEBP',
-                style: TextStyle(fontSize: 12, color: AppColors.textMuted)),
-          ],
-        ),
+            color: AppColors.bgCard,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.border)),
+        child: const Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.upload_file_rounded,
+                  color: AppColors.textMuted, size: 36),
+              SizedBox(height: 14),
+              Text('Tap to browse',
+                  style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.text)),
+              SizedBox(height: 4),
+              Text('PNG · JPG · WEBP',
+                  style: TextStyle(fontSize: 12, color: AppColors.textMuted)),
+            ]),
       ),
     );
   }
