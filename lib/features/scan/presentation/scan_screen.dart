@@ -430,7 +430,7 @@ class _UploadSection extends StatelessWidget {
     return GestureDetector(
       onTap: onPick,
       child: Container(
-        height: 200,
+        height: double.infinity,
         decoration: BoxDecoration(
             color: AppColors.bgCard,
             borderRadius: BorderRadius.circular(16),

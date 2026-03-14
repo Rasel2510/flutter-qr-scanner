@@ -7,7 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
-
+import 'package:gal/gal.dart';
 import '../../../core/theme/app_theme.dart';
 
 class QRPreviewWidget extends StatefulWidget {
@@ -70,30 +70,43 @@ class _QRPreviewWidgetState extends State<QRPreviewWidget> {
   }
 
   /// Save QR to device
-  Future<void> _downloadQR() async {
+Future<void> _downloadQR() async {
     final bytes = await _captureQR();
     if (bytes == null) return;
 
     try {
-      final dir = await getApplicationDocumentsDirectory();
+      // Check / request gallery permission
+      final hasAccess = await Gal.hasAccess(toAlbum: true);
+      if (!hasAccess) {
+        final granted = await Gal.requestAccess(toAlbum: true);
+        if (!granted) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              _snackBar('Gallery permission denied', AppColors.error),
+            );
+          }
+          return;
+        }
+      }
 
-      final file = File(
-        '${dir.path}/qrcraft_${DateTime.now().millisecondsSinceEpoch}.png',
-      );
+      // Write to temp file then save to gallery
+      final dir = await getTemporaryDirectory();
+      final path =
+          '${dir.path}/qrcraft_${DateTime.now().millisecondsSinceEpoch}.png';
+      await File(path).writeAsBytes(bytes);
 
-      await file.writeAsBytes(bytes);
+      await Gal.putImage(path, album: 'QRcraft');
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          _snackBar('QR code saved!', AppColors.success),
+          _snackBar('Saved to gallery!', AppColors.success),
         );
       }
     } catch (e) {
       debugPrint("Save Error: $e");
-
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          _snackBar('Could not save QR code', AppColors.error),
+          _snackBar('Could not save to gallery', AppColors.error),
         );
       }
     }
