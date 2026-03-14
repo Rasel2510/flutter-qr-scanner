@@ -30,7 +30,9 @@ dependencies:
   flutter_svg: ^2.0.10+1
   gap: ^3.0.1
   flutter_launcher_icons: ^0.14.4
+  # launch url 
   url_launcher: ^6.3.2
+  #save to gallary 
   gal: ^2.3.2
 
 dev_dependencies:
@@ -43,5 +45,6 @@ flutter:
 flutter_launcher_icons:
   android: true
   ios: false
-  image_path: "assets/qr_scanner.png"
-  adaptive_icon_background: "#FFFFFF" 
+  image_path: "assets/qr_scanner.png" 
+  adaptive_icon_foreground: "assets/qr_scanner.png"
+  adaptive_icon_background: "#FFFFFF"
