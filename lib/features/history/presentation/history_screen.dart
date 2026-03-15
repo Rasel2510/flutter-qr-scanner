@@ -4,7 +4,6 @@ import 'package:qrcraft/core/utils/history_manager.dart';
 import 'package:qrcraft/core/utils/qr_history_item.dart';
 import 'package:qrcraft/features/history/widgets/history_card.dart';
 
-
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key});
 
@@ -155,29 +154,28 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   ? const Center(
                       child:
                           CircularProgressIndicator(color: AppColors.primary))
-                  : _filtered.isEmpty
-                      ? _EmptyState(filter: _filter)
-                      : RefreshIndicator(
-                          color: AppColors.primary,
-                          backgroundColor: AppColors.bgCard,
-                          onRefresh: _loadHistory,
-                          child: ListView.separated(
-                            padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
-                            itemCount: _filtered.length,
-                            separatorBuilder: (_, __) =>
-                                const SizedBox(height: 12),
-                            itemBuilder: (context, index) {
-                              final item = _filtered[index];
-                              return HistoryCard(
-                                item: item,
-                                onDelete: () => _delete(item.id),
-                                onReload: () {
-                                  // Navigate back to generate tab handled in main screen
-                                },
-                              );
+                  // : _filtered.isEmpty
+                  //     ? _EmptyState(filter: _filter)
+                  : RefreshIndicator(
+                      color: AppColors.primary,
+                      backgroundColor: AppColors.bgCard,
+                      onRefresh: _loadHistory,
+                      child: ListView.separated(
+                        padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+                        itemCount: _filtered.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 12),
+                        itemBuilder: (context, index) {
+                          final item = _filtered[index];
+                          return HistoryCard(
+                            item: item,
+                            onDelete: () => _delete(item.id),
+                            onReload: () {
+                              // Navigate back to generate tab handled in main screen
                             },
-                          ),
-                        ),
+                          );
+                        },
+                      ),
+                    ),
             ),
           ],
         ),

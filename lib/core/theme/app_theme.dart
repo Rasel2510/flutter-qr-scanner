@@ -16,6 +16,7 @@ class AppColors {
 
   static const Color text = Color(0xFF111827);
   static const Color textSecondary = Color(0xFF6B7280);
+  static const Color orange = Color.fromARGB(77, 211, 22, 249);
   static const Color textMuted = Color(0xFF9CA3AF);
 
   static const Color success = Color(0xFF10B981);
