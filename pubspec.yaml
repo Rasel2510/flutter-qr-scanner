@@ -47,4 +47,4 @@ flutter_launcher_icons:
   ios: false
   image_path: "assets/qr_scanner.png" 
   adaptive_icon_foreground: "assets/qr_scanner.png"
-  adaptive_icon_background: "#0F172A"
+  adaptive_icon_background: "#FFFFFF"
