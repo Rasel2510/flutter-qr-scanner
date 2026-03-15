@@ -154,27 +154,35 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   ? const Center(
                       child:
                           CircularProgressIndicator(color: AppColors.primary))
-                  // : _filtered.isEmpty
-                  //     ? _EmptyState(filter: _filter)
                   : RefreshIndicator(
                       color: AppColors.primary,
                       backgroundColor: AppColors.bgCard,
                       onRefresh: _loadHistory,
-                      child: ListView.separated(
-                        padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
-                        itemCount: _filtered.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 12),
-                        itemBuilder: (context, index) {
-                          final item = _filtered[index];
-                          return HistoryCard(
-                            item: item,
-                            onDelete: () => _delete(item.id),
-                            onReload: () {
-                              // Navigate back to generate tab handled in main screen
-                            },
-                          );
-                        },
-                      ),
+                      child: _filtered.isEmpty
+                          ? CustomScrollView(
+                              slivers: [
+                                SliverFillRemaining(
+                                  hasScrollBody: false,
+                                  child: _EmptyState(filter: _filter),
+                                ),
+                              ],
+                            )
+                          : ListView.separated(
+                              padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+                              itemCount: _filtered.length,
+                              separatorBuilder: (_, __) =>
+                                  const SizedBox(height: 12),
+                              itemBuilder: (context, index) {
+                                final item = _filtered[index];
+                                return HistoryCard(
+                                  item: item,
+                                  onDelete: () => _delete(item.id),
+                                  onReload: () {
+                                    // Navigate back to generate tab handled in main screen
+                                  },
+                                );
+                              },
+                            ),
                     ),
             ),
           ],
@@ -294,7 +302,7 @@ class _EmptyState extends StatelessWidget {
           const Icon(Icons.history_rounded, size: 64, color: AppColors.border),
           const SizedBox(height: 16),
           Text(
-            filter == 'all' ? 'No history yet' : 'No ${filter} QR codes',
+            filter == 'all' ? 'No history yet' : 'No $filter QR codes',
             style: const TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
