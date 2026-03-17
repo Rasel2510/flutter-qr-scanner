@@ -57,15 +57,65 @@ class ScanResultWidget extends StatelessWidget {
     );
   }
 
-  /// OPEN RESULT
-  Future<void> _openResult(BuildContext context) async {
+  // /// OPEN RESULT
+  // Future<void> _openResult(BuildContext context) async {
+  //   final text = result.trim();
+  //   Uri uri;
+
+  //   switch (_type) {
+  //     case QRType.url:
+  //       final parsed = Uri.tryParse(text);
+
+  //       if (parsed != null && parsed.hasScheme) {
+  //         uri = parsed;
+  //       } else {
+  //         uri = Uri.parse('https://$text');
+  //       }
+  //       break;
+
+  //     case QRType.email:
+  //       uri = Uri(
+  //         scheme: 'mailto',
+  //         path: text,
+  //       );
+  //       break;
+
+  //     case QRType.phone:
+  //       uri = Uri(
+  //         scheme: 'tel',
+  //         path: text,
+  //       );
+  //       break;
+
+  //     default:
+  //       uri = Uri.tryParse(text) ?? Uri.parse('https://$text');
+  //   }
+
+  //   final bool appExists = await canLaunchUrl(uri);
+
+  //   if (appExists) {
+  //     /// Open in native app (browser, dialer, mail app)
+  //     await launchUrl(
+  //       uri,
+  //       mode: LaunchMode.externalApplication,
+  //     );
+  //   } else {
+  //     /// Fallback open inside app browser
+  //     final fallback = Uri.parse('https://$text');
+
+  //     await launchUrl(
+  //       fallback,
+  //       mode: LaunchMode.inAppBrowserView,
+  //     );
+  //   }
+  // }
+Future<void> _openResult(BuildContext context) async {
     final text = result.trim();
     Uri uri;
 
     switch (_type) {
       case QRType.url:
         final parsed = Uri.tryParse(text);
-
         if (parsed != null && parsed.hasScheme) {
           uri = parsed;
         } else {
@@ -74,17 +124,17 @@ class ScanResultWidget extends StatelessWidget {
         break;
 
       case QRType.email:
-        uri = Uri(
-          scheme: 'mailto',
-          path: text,
-        );
+        // strip mailto: if already present
+        final email =
+            text.toLowerCase().startsWith('mailto:') ? text.substring(7) : text;
+        uri = Uri(scheme: 'mailto', path: email.trim());
         break;
 
       case QRType.phone:
-        uri = Uri(
-          scheme: 'tel',
-          path: text,
-        );
+        // strip tel: if already present 
+        final phone =
+            text.toLowerCase().startsWith('tel:') ? text.substring(4) : text;
+        uri = Uri(scheme: 'tel', path: phone.trim());
         break;
 
       default:
@@ -94,22 +144,12 @@ class ScanResultWidget extends StatelessWidget {
     final bool appExists = await canLaunchUrl(uri);
 
     if (appExists) {
-      /// Open in native app (browser, dialer, mail app)
-      await launchUrl(
-        uri,
-        mode: LaunchMode.externalApplication,
-      );
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
     } else {
-      /// Fallback open inside app browser
       final fallback = Uri.parse('https://$text');
-
-      await launchUrl(
-        fallback,
-        mode: LaunchMode.inAppBrowserView,
-      );
+      await launchUrl(fallback, mode: LaunchMode.inAppBrowserView);
     }
   }
-
   @override
   Widget build(BuildContext context) {
     return Container(
