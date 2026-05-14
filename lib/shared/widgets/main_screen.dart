@@ -1,35 +1,34 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../features/generate/presentation/generate_screen.dart';
 import '../../features/scan/presentation/scan_screen.dart';
 import '../../features/history/presentation/history_screen.dart';
 import '../widgets/app_bottom_nav_bar.dart';
 
-class MainScreen extends StatefulWidget {
+// Provider for the currently selected bottom nav index
+final bottomNavIndexProvider = StateProvider<int>((ref) => 0);
+
+class MainScreen extends ConsumerWidget {
   const MainScreen({super.key});
 
-  @override
-  State<MainScreen> createState() => _MainScreenState();
-}
-
-class _MainScreenState extends State<MainScreen> {
-  int _currentIndex = 0;
-
-  final List<Widget> _screens = const [
+  static const List<Widget> _screens = [
     ScanScreen(),
     GenerateScreen(),
     HistoryScreen(),
   ];
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final currentIndex = ref.watch(bottomNavIndexProvider);
+
     return Scaffold(
       body: IndexedStack(
-        index: _currentIndex,
+        index: currentIndex,
         children: _screens,
       ),
       bottomNavigationBar: AppBottomNavBar(
-        currentIndex: _currentIndex,
-        onTap: (index) => setState(() => _currentIndex = index),
+        currentIndex: currentIndex,
+        onTap: (index) => ref.read(bottomNavIndexProvider.notifier).state = index,
       ),
     );
   }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/theme/app_theme.dart';
 import 'shared/widgets/main_screen.dart';
 
@@ -12,7 +13,12 @@ void main() {
     systemNavigationBarColor: Colors.white,
     systemNavigationBarIconBrightness: Brightness.dark,
   ));
-  runApp(const QRCraftApp());
+  runApp(
+    // Wrap the entire app in ProviderScope to enable Riverpod
+    const ProviderScope(
+      child: QRCraftApp(),
+    ),
+  );
 }
 
 class QRCraftApp extends StatelessWidget {

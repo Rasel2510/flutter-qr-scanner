@@ -1,32 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qrcraft/core/theme/app_theme.dart';
-import 'package:qrcraft/core/utils/history_manager.dart';
-import 'package:qrcraft/core/utils/qr_history_item.dart';
+import 'package:qrcraft/core/providers/generate_provider.dart';
+import 'package:qrcraft/core/providers/history_provider.dart';
 import 'package:qrcraft/features/generate/widgets/qr_customize_options.dart';
 import 'package:qrcraft/features/generate/widgets/qr_input_form.dart';
 import 'package:qrcraft/features/generate/widgets/qr_preview_widget.dart';
 import 'package:qrcraft/features/generate/widgets/qr_type_selector.dart';
 
-class GenerateScreen extends StatefulWidget {
+class GenerateScreen extends ConsumerWidget {
   const GenerateScreen({super.key});
 
-  @override
-  State<GenerateScreen> createState() => _GenerateScreenState();
-}
+  void _onGenerate(BuildContext context, WidgetRef ref) {
+    final notifier = ref.read(generateProvider.notifier);
+    final state = ref.read(generateProvider);
 
-class _GenerateScreenState extends State<GenerateScreen> {
-  QRType _selectedType = QRType.url;
-  String _inputValue = '';
-  String _generatedContent = '';
-  bool _hasGenerated = false;
+    final content = notifier.generate();
 
-  Color _fgColor = AppColors.primary;
-  Color _bgColor = Colors.white;
-  double _size = 256;
-  String _ecLevel = 'M';
-
-  void _onGenerate() {
-    if (_inputValue.trim().isEmpty) {
+    if (content == null) {
+      // Input was empty — show snackbar
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Row(children: [
@@ -45,26 +37,24 @@ class _GenerateScreenState extends State<GenerateScreen> {
       );
       return;
     }
-    setState(() {
-      _generatedContent = _inputValue;
-      _hasGenerated = true;
-    });
 
-    // Save to history
-    HistoryManager.add(
-      mode: QRMode.generated,
-      type: _selectedType,
-      label: QRHistoryItem.typeLabel(_selectedType),
-      content: _inputValue,
-      fgColor:
-          '#${_fgColor.toARGB32().toRadixString(16).substring(2).toUpperCase()}',
-      bgColor:
-          '#${_bgColor.toARGB32().toRadixString(16).substring(2).toUpperCase()}',
-    );
+    // Save to history via Riverpod
+    ref.read(historyProvider.notifier).addGenerated(
+          type: state.selectedType,
+          content: content,
+          fgColor:
+              '#${state.fgColor.toARGB32().toRadixString(16).substring(2).toUpperCase()}',
+          bgColor:
+              '#${state.bgColor.toARGB32().toRadixString(16).substring(2).toUpperCase()}',
+        );
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Watch generate state — entire screen rebuilds on state changes
+    final state = ref.watch(generateProvider);
+    final notifier = ref.read(generateProvider.notifier);
+
     return Scaffold(
       backgroundColor: AppColors.bg,
       body: SafeArea(
@@ -91,12 +81,8 @@ class _GenerateScreenState extends State<GenerateScreen> {
 
               /// TYPE SELECTOR
               QRTypeSelector(
-                selected: _selectedType,
-                onChanged: (type) => setState(() {
-                  _selectedType = type;
-                  _inputValue = '';
-                  _hasGenerated = false;
-                }),
+                selected: state.selectedType,
+                onChanged: notifier.setType,
               ),
 
               const SizedBox(height: 20),
@@ -110,8 +96,8 @@ class _GenerateScreenState extends State<GenerateScreen> {
                   border: Border.all(color: AppColors.border),
                 ),
                 child: QRInputForm(
-                  type: _selectedType,
-                  onChanged: (val) => setState(() => _inputValue = val),
+                  type: state.selectedType,
+                  onChanged: notifier.setInput,
                 ),
               ),
 
@@ -119,21 +105,21 @@ class _GenerateScreenState extends State<GenerateScreen> {
 
               /// CUSTOMIZE
               QRCustomizeOptions(
-                fgColor: _fgColor,
-                bgColor: _bgColor,
-                size: _size,
-                ecLevel: _ecLevel,
-                onFgChanged: (c) => setState(() => _fgColor = c),
-                onBgChanged: (c) => setState(() => _bgColor = c),
-                onSizeChanged: (s) => setState(() => _size = s),
-                onEcChanged: (e) => setState(() => _ecLevel = e),
+                fgColor: state.fgColor,
+                bgColor: state.bgColor,
+                size: state.size,
+                ecLevel: state.ecLevel,
+                onFgChanged: notifier.setFgColor,
+                onBgChanged: notifier.setBgColor,
+                onSizeChanged: notifier.setSize,
+                onEcChanged: notifier.setEcLevel,
               ),
 
               const SizedBox(height: 20),
 
               /// GENERATE BUTTON
               GestureDetector(
-                onTap: _onGenerate,
+                onTap: () => _onGenerate(context, ref),
                 child: Container(
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(vertical: 16),
@@ -160,13 +146,13 @@ class _GenerateScreenState extends State<GenerateScreen> {
               const SizedBox(height: 24),
 
               /// QR PREVIEW
-              if (_hasGenerated && _generatedContent.isNotEmpty)
+              if (state.hasGenerated && state.generatedContent.isNotEmpty)
                 QRPreviewWidget(
-                  content: _generatedContent,
-                  fgColor: _fgColor,
-                  bgColor: _bgColor,
-                  size: _size,
-                  ecLevel: _ecLevel,
+                  content: state.generatedContent,
+                  fgColor: state.fgColor,
+                  bgColor: state.bgColor,
+                  size: state.size,
+                  ecLevel: state.ecLevel,
                 ),
 
               const SizedBox(height: 32),

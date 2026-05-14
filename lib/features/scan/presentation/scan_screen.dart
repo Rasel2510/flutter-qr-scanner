@@ -1,26 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:qrcraft/core/theme/app_theme.dart';
-import 'package:qrcraft/core/utils/history_manager.dart';
-import 'package:qrcraft/core/utils/qr_history_item.dart';
+import 'package:qrcraft/core/providers/scan_provider.dart';
+import 'package:qrcraft/core/providers/history_provider.dart';
 import 'package:qrcraft/features/scan/widgets/camara_section.dart';
 import 'package:qrcraft/features/scan/widgets/scan_result_widget.dart';
 import 'package:qrcraft/features/scan/widgets/upload_section.dart';
 
-class ScanScreen extends StatefulWidget {
+class ScanScreen extends ConsumerStatefulWidget {
   const ScanScreen({super.key});
 
   @override
-  State<ScanScreen> createState() => _ScanScreenState();
+  ConsumerState<ScanScreen> createState() => _ScanScreenState();
 }
 
-class _ScanScreenState extends State<ScanScreen> with WidgetsBindingObserver {
+class _ScanScreenState extends ConsumerState<ScanScreen>
+    with WidgetsBindingObserver {
   late MobileScannerController _controller;
-  bool _scanMode = true; // true = camera, false = upload
-  String? _scanResult;
-  bool _torchOn = false;
-  bool _isScanning = true;
 
   @override
   void initState() {
@@ -45,9 +43,12 @@ class _ScanScreenState extends State<ScanScreen> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    final scanState = ref.read(scanProvider);
     switch (state) {
       case AppLifecycleState.resumed:
-        if (_isScanning && _scanMode) _controller.start();
+        if (scanState.isScanning && scanState.isCameraMode) {
+          _controller.start();
+        }
         break;
       case AppLifecycleState.paused:
       case AppLifecycleState.inactive:
@@ -59,38 +60,23 @@ class _ScanScreenState extends State<ScanScreen> with WidgetsBindingObserver {
   }
 
   void _onDetect(BarcodeCapture capture) {
-    if (!_isScanning) return;
+    final isScanning = ref.read(scanProvider).isScanning;
+    if (!isScanning) return;
     if (capture.barcodes.isEmpty) return;
     final value = capture.barcodes.first.rawValue;
     if (value == null || value.isEmpty) return;
 
-    // Stop camera immediately so it doesn't keep firing
     _controller.stop();
 
-    setState(() {
-      _scanResult = value;
-      _isScanning = false;
-    });
-    _saveToHistory(value);
+    // Update scan state via provider
+    ref.read(scanProvider.notifier).onDetected(value);
+
+    // Save to history via provider
+    ref.read(historyProvider.notifier).addScanned(value);
   }
 
-  void _saveToHistory(String content) {
-    final type = QRHistoryItem.detectType(content);
-    HistoryManager.add(
-      mode: QRMode.scanned,
-      type: type,
-      label: QRHistoryItem.typeLabel(type),
-      content: content,
-    );
-  }
-
-  /// Dismiss result → restart camera for next scan
   void _resetScan() {
-    setState(() {
-      _scanResult = null;
-      _isScanning = true;
-      _torchOn = false;
-    });
+    ref.read(scanProvider.notifier).resetScan();
     _controller.start();
   }
 
@@ -103,11 +89,8 @@ class _ScanScreenState extends State<ScanScreen> with WidgetsBindingObserver {
     if (result != null && result.barcodes.isNotEmpty) {
       final value = result.barcodes.first.rawValue;
       if (value != null && value.isNotEmpty) {
-        setState(() {
-          _scanResult = value;
-          _isScanning = false;
-        });
-        _saveToHistory(value);
+        ref.read(scanProvider.notifier).setResult(value);
+        ref.read(historyProvider.notifier).addScanned(value);
       }
     } else {
       if (mounted) {
@@ -132,13 +115,7 @@ class _ScanScreenState extends State<ScanScreen> with WidgetsBindingObserver {
   }
 
   void _switchMode(bool toCamera) {
-    if (_scanMode == toCamera) return;
-    setState(() {
-      _scanMode = toCamera;
-      _scanResult = null;
-      _isScanning = true;
-      _torchOn = false;
-    });
+    ref.read(scanProvider.notifier).switchMode(toCamera);
     if (toCamera) {
       Future.delayed(const Duration(milliseconds: 100), () {
         if (mounted) _controller.start();
@@ -150,6 +127,9 @@ class _ScanScreenState extends State<ScanScreen> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
+    // Watch scan state — rebuilds automatically on changes
+    final scanState = ref.watch(scanProvider);
+
     return Scaffold(
       backgroundColor: AppColors.bg,
       body: SafeArea(
@@ -170,15 +150,17 @@ class _ScanScreenState extends State<ScanScreen> with WidgetsBindingObserver {
                   style:
                       TextStyle(fontSize: 14, color: AppColors.textSecondary)),
               const SizedBox(height: 24),
-              _ModeToggle(isCameraMode: _scanMode, onToggle: _switchMode),
+              _ModeToggle(
+                  isCameraMode: scanState.isCameraMode,
+                  onToggle: _switchMode),
               const SizedBox(height: 20),
-              if (_scanMode)
+              if (scanState.isCameraMode)
                 CameraSection(
                   controller: _controller,
-                  torchOn: _torchOn,
+                  torchOn: scanState.torchOn,
                   onDetect: _onDetect,
                   onToggleTorch: () {
-                    setState(() => _torchOn = !_torchOn);
+                    ref.read(scanProvider.notifier).toggleTorch();
                     _controller.toggleTorch();
                   },
                   onPickGallery: _pickFromGallery,
@@ -186,8 +168,9 @@ class _ScanScreenState extends State<ScanScreen> with WidgetsBindingObserver {
               else
                 UploadSection(onPick: _pickFromGallery),
               const SizedBox(height: 20),
-              if (_scanResult != null)
-                ScanResultWidget(result: _scanResult!, onDismiss: _resetScan),
+              if (scanState.scanResult != null)
+                ScanResultWidget(
+                    result: scanState.scanResult!, onDismiss: _resetScan),
               const SizedBox(height: 32),
             ],
           ),
@@ -272,4 +255,3 @@ class _TabBtn extends StatelessWidget {
     );
   }
 }
-
