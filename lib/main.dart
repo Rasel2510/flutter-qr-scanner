@@ -8,9 +8,9 @@ void main() {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-    statusBarColor: Colors.transparent,
+    statusBarColor: Color(0xFFFFF3E4),
     statusBarIconBrightness: Brightness.dark,
-    systemNavigationBarColor: Colors.white,
+    systemNavigationBarColor: Color(0xFFFFF3E4),
     systemNavigationBarIconBrightness: Brightness.dark,
   ));
   runApp(
@@ -29,8 +29,10 @@ class QRCraftApp extends StatelessWidget {
     return MaterialApp(
       title: 'QRcraft',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.dark,
+      theme: AppTheme.light,
+      themeMode: ThemeMode.light,
       home: const MainScreen(),
     );
   }
 }
+

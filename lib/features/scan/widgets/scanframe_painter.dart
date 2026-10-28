@@ -70,3 +70,4 @@ class ScanFramePainter extends CustomPainter {
   @override
   bool shouldRepaint(_) => false;
 }
+

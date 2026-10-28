@@ -68,3 +68,4 @@ class ScanNotifier extends Notifier<ScanState> {
 
 final scanProvider =
     NotifierProvider<ScanNotifier, ScanState>(ScanNotifier.new);
+

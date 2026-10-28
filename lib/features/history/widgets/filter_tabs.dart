@@ -64,36 +64,43 @@ class _Tab extends StatelessWidget {
         duration: const Duration(milliseconds: 180),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary : AppColors.bgCard,
+          color: isSelected ? AppColors.primary : AppColors.surface,
           borderRadius: BorderRadius.circular(100),
-          border: Border.all(
-              color: isSelected ? AppColors.primary : AppColors.border),
+          border: Border.all(color: AppColors.ink, width: 2),
+          boxShadow: isSelected
+              ? const [
+                  BoxShadow(
+                    color: AppColors.ink,
+                    offset: Offset(3, 3),
+                    blurRadius: 0,
+                  ),
+                ]
+              : null,
         ),
         child: Row(
           children: [
             Text(
               label,
-              style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  color:
-                      isSelected ? Colors.white : AppColors.textSecondary),
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: AppColors.ink,
+              ),
             ),
             const SizedBox(width: 6),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
               decoration: BoxDecoration(
-                color: isSelected
-                    ? Colors.white.withValues(alpha: 0.2)
-                    : AppColors.surface,
+                color: AppColors.ink,
                 borderRadius: BorderRadius.circular(100),
               ),
               child: Text(
                 '$count',
-                style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                    color: isSelected ? Colors.white : AppColors.textMuted),
+                style: const TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.surface,
+                ),
               ),
             ),
           ],

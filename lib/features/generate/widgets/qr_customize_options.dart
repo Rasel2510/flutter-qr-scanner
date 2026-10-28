@@ -32,7 +32,7 @@ class _QRCustomizeOptionsState extends State<QRCustomizeOptions> {
 
   static const _sizes = [
     (200.0, 'Small'),
-    (256.0, 'Medium'),
+    (256.0, 'Med'),
     (350.0, 'Large'),
     (480.0, 'XL'),
   ];
@@ -40,7 +40,7 @@ class _QRCustomizeOptionsState extends State<QRCustomizeOptions> {
   static const _ecLevels = [
     ('L', 'Low 7%'),
     ('M', 'Med 15%'),
-    ('Q', 'High 25%'),
+    ('Q', 'Hi 25%'),
     ('H', 'Max 30%'),
   ];
 
@@ -48,9 +48,16 @@ class _QRCustomizeOptionsState extends State<QRCustomizeOptions> {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.bgCard,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.ink, width: 2),
+        boxShadow: const [
+          BoxShadow(
+            color: AppColors.ink,
+            offset: Offset(4, 4),
+            blurRadius: 0,
+          ),
+        ],
       ),
       child: Column(
         children: [
@@ -66,20 +73,20 @@ class _QRCustomizeOptionsState extends State<QRCustomizeOptions> {
                       style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.text)),
+                          color: AppColors.ink)),
                   const Spacer(),
                   AnimatedRotation(
                     turns: _expanded ? 0.5 : 0,
                     duration: const Duration(milliseconds: 200),
                     child: const Icon(Icons.keyboard_arrow_down_rounded,
-                        color: AppColors.textMuted, size: 20),
+                        color: AppColors.ink, size: 22),
                   ),
                 ],
               ),
             ),
           ),
 
-          /// CONTENT
+          /// EXPANDABLE CONTENT
           AnimatedCrossFade(
             duration: const Duration(milliseconds: 220),
             crossFadeState: _expanded
@@ -90,7 +97,7 @@ class _QRCustomizeOptionsState extends State<QRCustomizeOptions> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Divider(color: AppColors.border, height: 1),
+                  const Divider(color: AppColors.ink, height: 1, thickness: 2),
                   const SizedBox(height: 16),
 
                   /// COLORS
@@ -109,11 +116,11 @@ class _QRCustomizeOptionsState extends State<QRCustomizeOptions> {
                   const SizedBox(height: 16),
 
                   /// SIZE
-                  const Text('Size',
+                  Text('Size',
                       style: TextStyle(
                           fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          color: AppColors.textMuted)),
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.ink.withValues(alpha: 0.6))),
                   const SizedBox(height: 8),
                   Row(
                     children: _sizes.map((s) {
@@ -129,17 +136,17 @@ class _QRCustomizeOptionsState extends State<QRCustomizeOptions> {
                             decoration: BoxDecoration(
                               color: isSelected
                                   ? AppColors.primary
-                                  : AppColors.surface,
+                                  : AppColors.background,
                               borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                  color: AppColors.ink, width: 1.5),
                             ),
                             child: Text(label,
                                 textAlign: TextAlign.center,
-                                style: TextStyle(
+                                style: const TextStyle(
                                     fontSize: 11,
-                                    fontWeight: FontWeight.w600,
-                                    color: isSelected
-                                        ? Colors.white
-                                        : AppColors.textSecondary)),
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.ink)),
                           ),
                         ),
                       );
@@ -149,11 +156,11 @@ class _QRCustomizeOptionsState extends State<QRCustomizeOptions> {
                   const SizedBox(height: 16),
 
                   /// ERROR CORRECTION
-                  const Text('Error Correction',
+                  Text('Error Correction',
                       style: TextStyle(
                           fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          color: AppColors.textMuted)),
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.ink.withValues(alpha: 0.6))),
                   const SizedBox(height: 8),
                   Row(
                     children: _ecLevels.map((e) {
@@ -169,17 +176,17 @@ class _QRCustomizeOptionsState extends State<QRCustomizeOptions> {
                             decoration: BoxDecoration(
                               color: isSelected
                                   ? AppColors.primary
-                                  : AppColors.surface,
+                                  : AppColors.background,
                               borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                  color: AppColors.ink, width: 1.5),
                             ),
                             child: Text(label,
                                 textAlign: TextAlign.center,
-                                style: TextStyle(
+                                style: const TextStyle(
                                     fontSize: 10,
-                                    fontWeight: FontWeight.w600,
-                                    color: isSelected
-                                        ? Colors.white
-                                        : AppColors.textSecondary)),
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.ink)),
                           ),
                         ),
                       );
@@ -201,18 +208,19 @@ class _QRCustomizeOptionsState extends State<QRCustomizeOptions> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(label,
-            style: const TextStyle(
+            style: TextStyle(
                 fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: AppColors.textMuted)),
+                fontWeight: FontWeight.w600,
+                color: AppColors.ink.withValues(alpha: 0.6))),
         const SizedBox(height: 8),
         GestureDetector(
           onTap: () => _showColorPicker(context, current, onChanged),
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             decoration: BoxDecoration(
-              color: AppColors.surface,
+              color: AppColors.background,
               borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: AppColors.ink, width: 2),
             ),
             child: Row(
               children: [
@@ -222,7 +230,7 @@ class _QRCustomizeOptionsState extends State<QRCustomizeOptions> {
                   decoration: BoxDecoration(
                     color: current,
                     shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.border, width: 1.5),
+                    border: Border.all(color: AppColors.ink, width: 2),
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -230,8 +238,7 @@ class _QRCustomizeOptionsState extends State<QRCustomizeOptions> {
                   '#${current.toARGB32().toRadixString(16).substring(2).toUpperCase()}',
                   style: const TextStyle(
                       fontSize: 12,
-                      fontFamily: 'monospace',
-                      color: AppColors.textSecondary),
+                      color: AppColors.ink),
                 ),
               ],
             ),
@@ -247,11 +254,11 @@ class _QRCustomizeOptionsState extends State<QRCustomizeOptions> {
       Colors.black,
       Colors.white,
       AppColors.primary,
-      AppColors.accent,
-      const Color(0xFF22C55E),
-      const Color(0xFFF59E0B),
-      const Color(0xFFF87171),
-      const Color(0xFF06B6D4),
+      AppColors.secondary,
+      AppColors.success,
+      AppColors.backdrop,
+      AppColors.error,
+      AppColors.info,
       const Color(0xFF8B5CF6),
       const Color(0xFFEC4899),
       Colors.brown,
@@ -263,9 +270,10 @@ class _QRCustomizeOptionsState extends State<QRCustomizeOptions> {
     ];
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppColors.bgCard,
+      backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          side: BorderSide(color: AppColors.ink, width: 2)),
       builder: (_) => Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -276,7 +284,7 @@ class _QRCustomizeOptionsState extends State<QRCustomizeOptions> {
                 style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.text)),
+                    color: AppColors.ink)),
             const SizedBox(height: 20),
             Wrap(
               spacing: 12,
@@ -295,15 +303,13 @@ class _QRCustomizeOptionsState extends State<QRCustomizeOptions> {
                             color: c,
                             shape: BoxShape.circle,
                             border: Border.all(
-                                color: c == current
-                                    ? AppColors.primary
-                                    : AppColors.border,
-                                width: c == current ? 2.5 : 1),
+                                color: AppColors.ink,
+                                width: c == current ? 3 : 1.5),
                           ),
                           child: c == current
                               ? Icon(Icons.check,
                                   color: c == Colors.white
-                                      ? AppColors.text
+                                      ? AppColors.ink
                                       : Colors.white,
                                   size: 16)
                               : null,
@@ -318,3 +324,4 @@ class _QRCustomizeOptionsState extends State<QRCustomizeOptions> {
     );
   }
 }
+

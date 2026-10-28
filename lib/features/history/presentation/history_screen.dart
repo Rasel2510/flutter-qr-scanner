@@ -12,19 +12,22 @@ class HistoryScreen extends ConsumerWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        backgroundColor: AppColors.bgCard,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        backgroundColor: AppColors.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+          side: const BorderSide(color: AppColors.ink, width: 2),
+        ),
         title: const Text('Clear All History',
-            style:
-                TextStyle(color: AppColors.text, fontWeight: FontWeight.w700)),
-        content: const Text(
+            style: TextStyle(
+                color: AppColors.ink, fontWeight: FontWeight.w700)),
+        content: Text(
             'This will delete all your QR history. This cannot be undone.',
-            style: TextStyle(color: AppColors.textSecondary)),
+            style: TextStyle(color: AppColors.ink.withValues(alpha: 0.7))),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancel',
-                  style: TextStyle(color: AppColors.textSecondary))),
+              child: Text('Cancel',
+                  style: TextStyle(color: AppColors.ink.withValues(alpha: 0.55)))),
           TextButton(
               onPressed: () => Navigator.pop(context, true),
               child: const Text('Clear All',
@@ -40,17 +43,16 @@ class HistoryScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Watch history — rebuilds when items change or filter changes
     final asyncHistory = ref.watch(historyProvider);
 
     return asyncHistory.when(
       loading: () => const Scaffold(
-        backgroundColor: AppColors.bg,
+        backgroundColor: AppColors.background,
         body: Center(
             child: CircularProgressIndicator(color: AppColors.primary)),
       ),
       error: (e, _) => Scaffold(
-        backgroundColor: AppColors.bg,
+        backgroundColor: AppColors.background,
         body: Center(child: Text('Error: $e')),
       ),
       data: (historyState) {
@@ -58,7 +60,7 @@ class HistoryScreen extends ConsumerWidget {
         final filtered = historyState.filtered;
 
         return Scaffold(
-          backgroundColor: AppColors.bg,
+          backgroundColor: AppColors.background,
           body: SafeArea(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -76,13 +78,12 @@ class HistoryScreen extends ConsumerWidget {
                                 style: TextStyle(
                                     fontSize: 28,
                                     fontWeight: FontWeight.w700,
-                                    color: AppColors.text,
-                                    letterSpacing: -0.5)),
+                                    color: AppColors.ink)),
                             SizedBox(height: 4),
                             Text('Your generated & scanned codes',
                                 style: TextStyle(
                                     fontSize: 14,
-                                    color: AppColors.textSecondary)),
+                                    color: AppColors.ink)),
                           ],
                         ),
                       ),
@@ -93,17 +94,22 @@ class HistoryScreen extends ConsumerWidget {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 14, vertical: 8),
                             decoration: BoxDecoration(
-                              color: AppColors.error.withValues(alpha: 0.1),
+                              color: AppColors.error,
                               borderRadius: BorderRadius.circular(100),
-                              border: Border.all(
-                                  color:
-                                      AppColors.error.withValues(alpha: 0.3)),
+                              border: Border.all(color: AppColors.ink, width: 2),
+                              boxShadow: const [
+                                BoxShadow(
+                                  color: AppColors.ink,
+                                  offset: Offset(3, 3),
+                                  blurRadius: 0,
+                                ),
+                              ],
                             ),
                             child: const Text('Clear All',
                                 style: TextStyle(
                                     fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.error)),
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.surface)),
                           ),
                         ),
                     ],
@@ -134,8 +140,8 @@ class HistoryScreen extends ConsumerWidget {
                           child: CircularProgressIndicator(
                               color: AppColors.primary))
                       : RefreshIndicator(
-                          color: AppColors.primary,
-                          backgroundColor: AppColors.bgCard,
+                          color: AppColors.ink,
+                          backgroundColor: AppColors.primary,
                           onRefresh: () =>
                               ref.read(historyProvider.notifier).load(),
                           child: filtered.isEmpty
@@ -143,8 +149,8 @@ class HistoryScreen extends ConsumerWidget {
                                   slivers: [
                                     SliverFillRemaining(
                                       hasScrollBody: false,
-                                      child:
-                                          _EmptyState(filter: historyState.filter),
+                                      child: _EmptyState(
+                                          filter: historyState.filter),
                                     ),
                                   ],
                                 )
@@ -176,8 +182,6 @@ class HistoryScreen extends ConsumerWidget {
   }
 }
 
-
-
 /// ─── EMPTY STATE ─────────────────────────────────────────
 class _EmptyState extends StatelessWidget {
   final String filter;
@@ -190,22 +194,29 @@ class _EmptyState extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.history_rounded, size: 64, color: AppColors.border),
-          const SizedBox(height: 16),
+          // Flat shape illustration — dots, triangle, circle in coral/sky/green
+          SizedBox(
+            width: 120,
+            height: 120,
+            child: CustomPaint(painter: _EmptyIllustrationPainter()),
+          ),
+          const SizedBox(height: 20),
           Text(
             filter == 'all' ? 'No history yet' : 'No $filter QR codes',
             style: const TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
-                color: AppColors.textSecondary),
+                color: AppColors.ink),
           ),
           const SizedBox(height: 8),
           Text(
             filter == 'all'
                 ? 'Generate or scan a QR code\nto see it here'
                 : 'Nothing to show for this filter',
-            style: const TextStyle(
-                fontSize: 14, color: AppColors.textMuted, height: 1.5),
+            style: TextStyle(
+                fontSize: 14,
+                color: AppColors.ink.withValues(alpha: 0.55),
+                height: 1.5),
             textAlign: TextAlign.center,
           ),
         ],
@@ -213,3 +224,59 @@ class _EmptyState extends StatelessWidget {
     );
   }
 }
+
+/// Flat shape illustration using AppColors palette
+class _EmptyIllustrationPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final cx = size.width / 2;
+    final cy = size.height / 2;
+    final ink = Paint()
+      ..color = AppColors.ink
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2;
+
+    // Large circle (sky blue)
+    canvas.drawCircle(
+        Offset(cx, cy),
+        38,
+        Paint()
+          ..color = AppColors.info
+          ..style = PaintingStyle.fill);
+    canvas.drawCircle(Offset(cx, cy), 38, ink);
+
+    // Triangle (coral)
+    final tri = Path()
+      ..moveTo(cx - 18, cy + 14)
+      ..lineTo(cx + 18, cy + 14)
+      ..lineTo(cx, cy - 18)
+      ..close();
+    canvas.drawPath(tri,
+        Paint()
+          ..color = AppColors.secondary
+          ..style = PaintingStyle.fill);
+    canvas.drawPath(tri, ink);
+
+    // Dot top-right (green)
+    canvas.drawCircle(
+        Offset(cx + 30, cy - 28),
+        10,
+        Paint()
+          ..color = AppColors.success
+          ..style = PaintingStyle.fill);
+    canvas.drawCircle(Offset(cx + 30, cy - 28), 10, ink);
+
+    // Dot bottom-left (yellow)
+    canvas.drawCircle(
+        Offset(cx - 32, cy + 22),
+        8,
+        Paint()
+          ..color = AppColors.primary
+          ..style = PaintingStyle.fill);
+    canvas.drawCircle(Offset(cx - 32, cy + 22), 8, ink);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+

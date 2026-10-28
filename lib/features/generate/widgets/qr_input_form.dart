@@ -160,11 +160,12 @@ class _QRInputFormState extends State<QRInputForm> {
         TextField(
           controller: controller,
           keyboardType: keyboardType,
-          style: const TextStyle(color: AppColors.text, fontSize: 15),
+          style: const TextStyle(color: AppColors.ink, fontSize: 15),
           onChanged: (_) => _notify(),
           decoration: _inputDecoration(
               hint: hint,
-              prefixIcon: Icon(icon, color: AppColors.textMuted, size: 18)),
+              prefixIcon: Icon(icon,
+                  color: AppColors.ink.withValues(alpha: 0.5), size: 18)),
         ),
       ],
     );
@@ -182,7 +183,7 @@ class _QRInputFormState extends State<QRInputForm> {
         TextField(
           controller: controller,
           maxLines: 5,
-          style: const TextStyle(color: AppColors.text, fontSize: 15),
+          style: const TextStyle(color: AppColors.ink, fontSize: 15),
           onChanged: (_) => _notify(),
           decoration: _inputDecoration(hint: hint),
         ),
@@ -199,19 +200,19 @@ class _QRInputFormState extends State<QRInputForm> {
         TextField(
           controller: _wifiPassCtrl,
           obscureText: _obscurePass,
-          style: const TextStyle(color: AppColors.text, fontSize: 15),
+          style: const TextStyle(color: AppColors.ink, fontSize: 15),
           onChanged: (_) => _notify(),
           decoration: _inputDecoration(
             hint: 'WiFi password',
-            prefixIcon: const Icon(Icons.lock_outline_rounded,
-                color: AppColors.textMuted, size: 18),
+            prefixIcon: Icon(Icons.lock_outline_rounded,
+                color: AppColors.ink.withValues(alpha: 0.5), size: 18),
             suffixIcon: GestureDetector(
               onTap: () => setState(() => _obscurePass = !_obscurePass),
               child: Icon(
                   _obscurePass
                       ? Icons.visibility_outlined
                       : Icons.visibility_off_outlined,
-                  color: AppColors.textMuted,
+                  color: AppColors.ink.withValues(alpha: 0.5),
                   size: 18),
             ),
           ),
@@ -228,8 +229,8 @@ class _QRInputFormState extends State<QRInputForm> {
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
           initialValue: _wifiSecurity,
-          dropdownColor: AppColors.bgCard,
-          style: const TextStyle(color: AppColors.text, fontSize: 14),
+          dropdownColor: AppColors.surface,
+          style: const TextStyle(color: AppColors.ink, fontSize: 14),
           decoration: _inputDecoration(hint: ''),
           items: ['WPA', 'WEP', 'None']
               .map((e) => DropdownMenuItem(value: e, child: Text(e)))
@@ -245,10 +246,10 @@ class _QRInputFormState extends State<QRInputForm> {
 
   Widget _label(String text) => Text(
         text.toUpperCase(),
-        style: const TextStyle(
+        style: TextStyle(
             fontSize: 11,
-            fontWeight: FontWeight.w600,
-            color: AppColors.textMuted,
+            fontWeight: FontWeight.w700,
+            color: AppColors.ink.withValues(alpha: 0.6),
             letterSpacing: 0.8),
       );
 
@@ -256,7 +257,8 @@ class _QRInputFormState extends State<QRInputForm> {
       {required String hint, Widget? prefixIcon, Widget? suffixIcon}) {
     return InputDecoration(
       hintText: hint,
-      hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 14),
+      hintStyle: TextStyle(
+          color: AppColors.ink.withValues(alpha: 0.35), fontSize: 14),
       prefixIcon: prefixIcon,
       suffixIcon: suffixIcon != null
           ? Padding(
@@ -264,15 +266,19 @@ class _QRInputFormState extends State<QRInputForm> {
           : null,
       suffixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
       filled: true,
-      fillColor: AppColors.surface,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      fillColor: AppColors.background,
+      contentPadding:
+          const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+          borderRadius: BorderRadius.circular(100),
+          borderSide: const BorderSide(color: AppColors.ink, width: 2)),
       enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+          borderRadius: BorderRadius.circular(100),
+          borderSide: const BorderSide(color: AppColors.ink, width: 2)),
       focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.primary, width: 1.5)),
+          borderRadius: BorderRadius.circular(100),
+          borderSide: const BorderSide(color: AppColors.ink, width: 2)),
     );
   }
 }
+

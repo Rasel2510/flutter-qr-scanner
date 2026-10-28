@@ -13,8 +13,8 @@ class MainScreen extends ConsumerWidget {
 
   static const List<Widget> _screens = [
     ScanScreen(),
-    GenerateScreen(),
     HistoryScreen(),
+    GenerateScreen(),
   ];
 
   @override
@@ -33,3 +33,4 @@ class MainScreen extends ConsumerWidget {
     );
   }
 }
+

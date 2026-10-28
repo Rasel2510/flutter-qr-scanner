@@ -64,3 +64,4 @@ class HistoryManager {
     return '${months[dt.month - 1]} ${dt.day}, $h:$m $ampm';
   }
 }
+

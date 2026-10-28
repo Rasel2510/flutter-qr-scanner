@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:qrcraft/core/theme/app_theme.dart';
 import 'package:qrcraft/core/utils/qr_history_item.dart';
- 
 
 class QRTypeSelector extends StatelessWidget {
   final QRType selected;
@@ -24,11 +23,11 @@ class QRTypeSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 38,
+      height: 44,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: _types.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        separatorBuilder: (_, __) => const SizedBox(width: 10),
         itemBuilder: (context, index) {
           final (type, icon, label) = _types[index];
           final isSelected = selected == type;
@@ -36,27 +35,32 @@ class QRTypeSelector extends StatelessWidget {
             onTap: () => onChanged(type),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 180),
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 14),
               decoration: BoxDecoration(
-                color: isSelected ? AppColors.primary : AppColors.bgCard,
-                borderRadius: BorderRadius.circular(100),
-                border: Border.all(
-                    color: isSelected ? AppColors.primary : AppColors.border),
+                color: isSelected ? AppColors.primary : AppColors.surface,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: AppColors.ink, width: 2),
+                boxShadow: isSelected
+                    ? const [
+                        BoxShadow(
+                          color: AppColors.ink,
+                          offset: Offset(3, 3),
+                          blurRadius: 0,
+                        ),
+                      ]
+                    : null,
               ),
               child: Row(
                 children: [
-                  Icon(icon,
-                      size: 15,
-                      color:
-                          isSelected ? Colors.white : AppColors.textSecondary),
+                  Icon(icon, size: 16, color: AppColors.ink),
                   const SizedBox(width: 6),
                   Text(
-                    label,
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      color:
-                          isSelected ? Colors.white : AppColors.textSecondary,
+                    label.toUpperCase(),
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.8,
+                      color: AppColors.ink,
                     ),
                   ),
                 ],
@@ -68,3 +72,4 @@ class QRTypeSelector extends StatelessWidget {
     );
   }
 }
+

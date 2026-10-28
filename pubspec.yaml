@@ -29,10 +29,14 @@ dependencies:
   # UI
   flutter_svg: ^2.0.10+1
   gap: ^3.0.1
+  google_fonts: ^6.2.1
   flutter_launcher_icons: ^0.14.4
 
   # launch url
   url_launcher: ^6.3.2
+
+  # WiFi connect
+  wifi_iot: ^0.3.19+1
 
   # save to gallery
   gal: ^2.3.2
@@ -58,4 +62,4 @@ flutter_launcher_icons:
   ios: false
   image_path: "assets/qr_scanner.png"
   adaptive_icon_foreground: "assets/qr_icon.png"
-  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_background: "#FEFCF3"

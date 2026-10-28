@@ -20,7 +20,7 @@ class GenerateState {
     this.inputValue = '',
     this.generatedContent = '',
     this.hasGenerated = false,
-    this.fgColor = AppColors.primary,
+    this.fgColor = AppColors.ink,
     this.bgColor = Colors.white,
     this.size = 256,
     this.ecLevel = 'M',
@@ -86,3 +86,4 @@ class GenerateNotifier extends Notifier<GenerateState> {
 
 final generateProvider =
     NotifierProvider<GenerateNotifier, GenerateState>(GenerateNotifier.new);
+

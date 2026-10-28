@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:image_picker/image_picker.dart';
@@ -68,6 +69,9 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
 
     _controller.stop();
 
+    // Light haptic on successful scan
+    HapticFeedback.lightImpact();
+
     // Update scan state via provider
     ref.read(scanProvider.notifier).onDetected(value);
 
@@ -89,6 +93,7 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
     if (result != null && result.barcodes.isNotEmpty) {
       final value = result.barcodes.first.rawValue;
       if (value != null && value.isNotEmpty) {
+        HapticFeedback.lightImpact();
         ref.read(scanProvider.notifier).setResult(value);
         ref.read(historyProvider.notifier).addScanned(value);
       }
@@ -100,13 +105,11 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
               Icon(Icons.error_outline_rounded,
                   color: AppColors.error, size: 18),
               SizedBox(width: 10),
-              Text('No QR code found in image',
-                  style: TextStyle(color: Colors.black)),
+              Text('No QR code found in image'),
             ]),
-            backgroundColor: AppColors.bgCard,
             behavior: SnackBarBehavior.floating,
             shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
             margin: const EdgeInsets.all(16),
           ),
         );
@@ -127,11 +130,10 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
 
   @override
   Widget build(BuildContext context) {
-    // Watch scan state — rebuilds automatically on changes
     final scanState = ref.watch(scanProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -139,16 +141,22 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 32),
-              const Text('Scan QR',
-                  style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.text,
-                      letterSpacing: -0.5)),
+              const Text(
+                'Scan QR',
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.ink,
+                ),
+              ),
               const SizedBox(height: 4),
-              const Text('Use camera or pick from gallery',
-                  style:
-                      TextStyle(fontSize: 14, color: AppColors.textSecondary)),
+              Text(
+                'Use camera or pick from gallery',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: AppColors.ink.withValues(alpha: 0.55),
+                ),
+              ),
               const SizedBox(height: 24),
               _ModeToggle(
                   isCameraMode: scanState.isCameraMode,
@@ -190,7 +198,17 @@ class _ModeToggle extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-          color: AppColors.surface, borderRadius: BorderRadius.circular(12)),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(100),
+        border: Border.all(color: AppColors.ink, width: 2),
+        boxShadow: const [
+          BoxShadow(
+            color: AppColors.ink,
+            offset: Offset(4, 4),
+            blurRadius: 0,
+          ),
+        ],
+      ),
       padding: const EdgeInsets.all(4),
       child: Row(children: [
         _TabBtn(
@@ -228,30 +246,23 @@ class _TabBtn extends StatelessWidget {
           duration: const Duration(milliseconds: 180),
           padding: const EdgeInsets.symmetric(vertical: 11),
           decoration: BoxDecoration(
-            color: isActive ? AppColors.bgCard : Colors.transparent,
-            borderRadius: BorderRadius.circular(9),
-            boxShadow: isActive
-                ? [
-                    BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.06),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2))
-                  ]
-                : null,
+            color: isActive ? AppColors.primary : Colors.transparent,
+            borderRadius: BorderRadius.circular(100),
           ),
           child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
             Icon(icon,
                 size: 16,
-                color: isActive ? AppColors.text : AppColors.textMuted),
+                color: AppColors.ink),
             const SizedBox(width: 7),
             Text(label,
                 style: TextStyle(
                     fontSize: 13,
-                    fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
-                    color: isActive ? AppColors.text : AppColors.textMuted)),
+                    fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
+                    color: AppColors.ink)),
           ]),
         ),
       ),
     );
   }
 }
+

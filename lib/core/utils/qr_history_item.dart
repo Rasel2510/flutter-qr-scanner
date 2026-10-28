@@ -66,4 +66,36 @@ class QRHistoryItem {
       case QRType.wifi: return 'WiFi';
     }
   }
+
+  /// Parses WiFi QR content: WIFI:T:WPA;S:NetworkName;P:Password;H:false;;
+  /// Returns map with keys: ssid, password, type, hidden
+  static Map<String, String> parseWifiCredentials(String content) {
+    final result = <String, String>{
+      'ssid': '',
+      'password': '',
+      'type': 'WPA',
+      'hidden': 'false',
+    };
+
+    // Strip leading WIFI: prefix (case-insensitive)
+    final body = content.replaceFirst(RegExp(r'^WIFI:', caseSensitive: false), '');
+
+    // Split by semicolons and parse key=value pairs
+    final parts = body.split(';');
+    for (final part in parts) {
+      if (part.isEmpty) continue;
+      final colonIdx = part.indexOf(':');
+      if (colonIdx < 0) continue;
+      final key = part.substring(0, colonIdx).toUpperCase();
+      final val = part.substring(colonIdx + 1);
+      switch (key) {
+        case 'S': result['ssid'] = val; break;
+        case 'P': result['password'] = val; break;
+        case 'T': result['type'] = val; break;
+        case 'H': result['hidden'] = val; break;
+      }
+    }
+    return result;
+  }
 }
+

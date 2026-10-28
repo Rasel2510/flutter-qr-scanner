@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
 
+/// Floating pill-shaped bottom navigation bar — Cozy Pop theme.
+/// Surface color, 2 px ink border, hard 4 px offset shadow.
+/// Active tab gets a yellow pill highlight behind icon + label.
 class AppBottomNavBar extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onTap;
@@ -12,72 +15,80 @@ class AppBottomNavBar extends StatelessWidget {
   });
 
   static const _items = [
-    (Icons.qr_code_scanner_rounded, Icons.qr_code_scanner_rounded, 'Scan'),
-    (Icons.qr_code_2_rounded, Icons.qr_code_2_rounded, 'Generate'),
-    (Icons.history_rounded, Icons.history_rounded, 'History'),
+    (Icons.qr_code_scanner_outlined, 'Scan'),
+    (Icons.history_outlined, 'History'),
+    (Icons.qr_code_2_outlined, 'Generate'),
   ];
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        color: AppColors.bgCard,
-        border: Border(top: BorderSide(color: AppColors.border)),
-      ),
-      padding: EdgeInsets.only(
-        top: 10,
-        bottom: MediaQuery.of(context).padding.bottom + 10,
-      ),
-      child: Row(
-        children: List.generate(_items.length, (index) {
-          final (icon, activeIcon, label) = _items[index];
-          final isSelected = currentIndex == index;
-          return Expanded(
-            child: GestureDetector(
-              onTap: () => onTap(index),
-              behavior: HitTestBehavior.translucent,
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      width: 44,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? AppColors.primary.withValues(alpha: 0.15)
-                            : Colors.transparent,
-                        borderRadius: BorderRadius.circular(100),
-                      ),
-                      child: Icon(
-                        isSelected ? activeIcon : icon,
-                        color: isSelected
-                            ? AppColors.primary
-                            : AppColors.textMuted,
-                        size: 22,
-                      ),
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      label,
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight:
-                            isSelected ? FontWeight.w600 : FontWeight.w400,
-                        color: isSelected
-                            ? AppColors.primary
-                            : AppColors.textMuted,
-                      ),
-                    ),
-                  ],
-                ),
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+        child: Container(
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(100),
+            border: Border.all(color: AppColors.ink, width: 2),
+            boxShadow: const [
+              BoxShadow(
+                color: AppColors.ink,
+                offset: Offset(4, 4),
+                blurRadius: 0,
               ),
-            ),
-          );
-        }),
+            ],
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          child: Row(
+            children: List.generate(_items.length, (index) {
+              final (icon, label) = _items[index];
+              final isSelected = currentIndex == index;
+              return Expanded(
+                child: GestureDetector(
+                  onTap: () => onTap(index),
+                  behavior: HitTestBehavior.translucent,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? AppColors.primary
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(100),
+                      border: isSelected
+                          ? Border.all(color: AppColors.ink, width: 2)
+                          : null,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          icon,
+                          color: AppColors.ink,
+                          size: 24,
+                        ),
+                        if (isSelected) ...[
+                          const SizedBox(width: 6),
+                          Text(
+                            label,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.ink,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }),
+          ),
+        ),
       ),
     );
   }
 }
+

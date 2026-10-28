@@ -108,3 +108,4 @@ class HistoryNotifier extends AsyncNotifier<HistoryState> {
 
 final historyProvider =
     AsyncNotifierProvider<HistoryNotifier, HistoryState>(HistoryNotifier.new);
+
